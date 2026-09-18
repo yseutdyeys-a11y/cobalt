@@ -2,19 +2,19 @@ FROM node:20-alpine AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
+# Corepack ko base image par install aur enable karein
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 FROM base AS build
 WORKDIR /app
 COPY . /app
 
-# Corepack aur required build tools enable karein
-RUN corepack enable
 RUN apk add --no-cache python3 alpine-sdk
 
-# Without --frozen-lockfile ke dependencies install karein
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install
+# Simple install command execute karein
+RUN pnpm install --no-frozen-lockfile
 
-# Build process run karein
+# Build step run karein
 RUN pnpm --filter=@imput/cobalt-api build
 
 # Output folder mein app deploy karein

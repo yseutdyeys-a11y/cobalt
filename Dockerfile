@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM node:18-alpine AS base
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
@@ -9,16 +9,15 @@ FROM base AS build
 
 WORKDIR /app
 
-# Native modules build karne ke liye tools
-RUN apk add --no-cache python3 alpine-sdk
+# Native modules (isolated-vm) build karne ke liye tools
+RUN apk add --no-cache python3 alpine-sdk make g++
 
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY api/package.json ./api/
 COPY packages/ ./packages/
 
-# Dependencies install karein
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --frozen-lockfile
+# Lockfile strictly check kiye bina dependencies install karein
+RUN pnpm install --no-frozen-lockfile
 
 COPY . .
 

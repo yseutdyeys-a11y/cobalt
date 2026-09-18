@@ -1,5 +1,6 @@
 FROM ghcr.io/imputnet/cobalt:10
 
-EXPOSE 9000
+ENV PORT=9000
+ENV ENVIRONMENT=production
 
-CMD ["node", "src/index.js"]
+EXPOSE 9000

@@ -2,7 +2,6 @@ FROM ghcr.io/imputnet/cobalt:10
 
 ENV PORT=9000
 ENV API_URL=https://cobalt-bx4u.onrender.com/
-ENV WEB_URL=https://cobalt-bx4u.onrender.com/
 ENV ENVIRONMENT=production
 
-EXPOSE 9000
+ENTRYPOINT ["node", "/app/src/index.js"]

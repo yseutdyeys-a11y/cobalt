@@ -1,6 +1,9 @@
-FROM node:20-bookworm
+FROM node:18-bookworm
 
 WORKDIR /app
+
+# Build tools install karein C++ modules (isolated-vm) ke liye
+RUN apt-get update && apt-get install -y python3 build-essential && rm -rf /var/lib/apt/lists/*
 
 # Corepack aur pnpm setup
 RUN corepack enable && corepack prepare pnpm@latest --activate

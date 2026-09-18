@@ -6,14 +6,18 @@ FROM base AS build
 WORKDIR /app
 COPY . /app
 
+# Corepack aur required build tools enable karein
 RUN corepack enable
 RUN apk add --no-cache python3 alpine-sdk
 
-# Sabhi dependencies (dev + prod) install karein taaki deploy step fail na ho
+# Without --frozen-lockfile ke dependencies install karein
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --frozen-lockfile
+    pnpm install
 
-# Filter karke output folder mein app deploy karein
+# Build process run karein
+RUN pnpm --filter=@imput/cobalt-api build
+
+# Output folder mein app deploy karein
 RUN pnpm deploy --filter=@imput/cobalt-api --prod /prod/api
 
 FROM base AS api
@@ -24,6 +28,4 @@ COPY --from=build --chown=node:node /prod/api /app
 USER node
 
 EXPOSE 9000
-# Exact index.js ya compiled file path point karein
-CMD [ "node", "src/cobalt/index.js" ]
-
+CMD [ "node", "src/index.js" ]

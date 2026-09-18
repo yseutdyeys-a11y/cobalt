@@ -1,31 +1,22 @@
-FROM node:20-alpine AS base
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
+FROM node:20-bookworm
 
-# Corepack ko base image par install aur enable karein
+WORKDIR /app
+
+# Corepack aur pnpm setup
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-FROM base AS build
-WORKDIR /app
-COPY . /app
+# Repository files copy karein
+COPY . .
 
-RUN apk add --no-cache python3 alpine-sdk
-
-# Simple install command execute karein
+# Dependencies install karein (Bina lockfile strictness ke)
 RUN pnpm install --no-frozen-lockfile
 
-# Build step run karein
+# Cobalt API build karein
 RUN pnpm --filter=@imput/cobalt-api build
 
-# Output folder mein app deploy karein
-RUN pnpm deploy --filter=@imput/cobalt-api --prod /prod/api
-
-FROM base AS api
-WORKDIR /app
-
-COPY --from=build --chown=node:node /prod/api /app
-
-USER node
-
 EXPOSE 9000
-CMD [ "node", "src/index.js" ]
+
+ENV PORT=9000
+ENV NODE_ENV=production
+
+CMD ["pnpm", "--filter=@imput/cobalt-api", "start"]

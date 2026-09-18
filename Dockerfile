@@ -1,25 +1,41 @@
-FROM node:18-bookworm
+FROM node:20-alpine AS base
+
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+
+RUN corepack enable
+
+FROM base AS build
 
 WORKDIR /app
 
-# Build tools install karein C++ modules (isolated-vm) ke liye
-RUN apt-get update && apt-get install -y python3 build-essential && rm -rf /var/lib/apt/lists/*
+# Native modules build karne ke liye tools
+RUN apk add --no-cache python3 alpine-sdk
 
-# Corepack aur pnpm setup
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-# Repository files copy karein
-COPY . .
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY api/package.json ./api/
+COPY packages/ ./packages/
 
 # Dependencies install karein
-RUN pnpm install --no-frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile
 
-# Cobalt API build karein
-RUN pnpm --filter=api build
+COPY . .
+
+# API package deploy karein
+RUN pnpm deploy --filter=api --prod /prod/api
+
+FROM base AS api
+
+WORKDIR /app
+
+COPY --from=build /prod/api /app
 
 EXPOSE 9000
 
 ENV PORT=9000
 ENV NODE_ENV=production
 
-CMD ["pnpm", "--filter=api", "start"]
+USER node
+
+CMD [ "node", "src/index.js" ]
